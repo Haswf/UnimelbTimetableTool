@@ -1,2 +1,4 @@
 # ignore credential file for log in
 uom.json
+# ignore credential file of Google API
+credential.json

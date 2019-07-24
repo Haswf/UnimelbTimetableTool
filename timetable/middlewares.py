@@ -105,9 +105,9 @@ class TimetableDownloaderMiddleware(object):
 class RandomUserAgentMiddleware(object):
 
     def process_request(self, request, spider):
+        # set random UA for each request
         ua = random.choice(self.user_agent_list)
         request.headers['User-Agent'] = ua
-        print('当前使用的User-Agent:' + ua)
 
     user_agent_list = [
         'Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1062.0 Safari/536.3',

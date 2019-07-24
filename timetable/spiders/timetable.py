@@ -8,7 +8,33 @@ from scrapy.utils.response import open_in_browser
 class TimeTableSpider(scrapy.Spider):
     name = "timetable"
     start_urls = ['https://prod.ss.unimelb.edu.au/student/Login.aspx']
+
+    def start_requests(self):
+        for url in self.start_urls:
+            yield scrapy.Request(url, callback=self.log_in, dont_filter=False)
+
+    def log_in(self, response):
+        self.log("Getting tokens for login")
+        username, password = self.get_login_credential()
+        # TODO：get __EVENTTARGET from response instead of hard coding it
+        formdata = {'__EVENTTARGET': 'ctl00$Content$cmdLogin',
+                    '__VIEWSTATE': response.xpath("//div/input[@name='__VIEWSTATE']/@value").get(),
+                    '__VIEWSTATEGENERATOR': response.xpath("//*/div/input[@name='__VIEWSTATEGENERATOR']/@value").get(),
+                    '__EVENTVALIDATION': response.xpath("//div/input[@name='__EVENTVALIDATION']/@value").get(),
+                    'ctl00$Content$txtUserName$txtText': username,
+                    'ctl00$Content$txtPassword$txtText': password,
+                    }
+
+        # validate tokens
+        for token in formdata.values():
+            if not len(token):
+                raise ValueError("Invalid login token(s): {}".format(token))
+
+        return scrapy.FormRequest.from_response(response, formdata=formdata, callback=self.open_timetable)
+
+
     def get_login_credential(self):
+        # credential file name that contains username and password
         CREDENTIAL_FILE_NAME = 'uom.json'
 
         # Get path of credential json file
@@ -35,72 +61,83 @@ class TimeTableSpider(scrapy.Spider):
         return credential['username'], credential['password']
 
     def parse(self, response):
-        self.log("Getting tokens for login")
-        view_state = response.xpath("//div/input[@name='__VIEWSTATE']/@value").get()
-        event_validation = response.xpath("//div/input[@name='__EVENTVALIDATION']/@value").get()
-        view_state_generator = response.xpath("//*/div/input[@name='__VIEWSTATEGENERATOR']/@value").get()
-        username, password = self.get_login_credential();
-        formdata = {'__EVENTTARGET': 'ctl00$Content$cmdLogin',
-            '__VIEWSTATE': view_state,
-            '__VIEWSTATEGENERATOR': view_state_generator,
-            '__EVENTVALIDATION': event_validation,
-            'ctl00$Content$txtUserName$txtText': username,
-            'ctl00$Content$txtPassword$txtText': password,
-            }
-        return scrapy.FormRequest.from_response(response, formdata=formdata, callback=self.open_timetable)
+       return
         
     def open_timetable(self,response):
         # get url of timetable
-        # this xpath expression is ulgy...
+        # TODO: this xpath expression is ugly...It's probably better to rewrite it someday.
         timetable_url = response.xpath("//div[@class='nav-collapse']/ul/li[2]/a/@href").get()
         if timetable_url is not None:
            # yield scrapy.Request(timetable_url, callback=self.parse_timetable)
             yield response.follow(timetable_url, callback=self.parse_timetable)
+        else:
+            raise ValueError("Invalid timetable url {}".format(timetable_url))
 
     def parse_timetable(self, response):
-        # open_in_browser(response)
-        #for class_info in response.xpath("//div[@class=cssTtableHeaderPanel]").getall():
-        class_names = response.xpath("//div[@class='cssTtableRoundBorder cssTtableSspColourBlock']")
-        class_info = response.xpath("//div[@class='cssClassContainer']")
+        # Extract ClassContainer selector to construct iterator
+        classContainer = response.xpath("//div[@class='cssClassContainer']")
+        # Match subject code and subject name
+        subject_pair = self.match_name_and_info(response)
 
-        subject_code_name = []
-        subject_code_info = []
+        timetable = list()
 
-        temp_codes = []
-        for temp_code in class_names.xpath(
-                "//div[@class='cssTtableRoundBorder cssTtableSspColourBlock']/span/text()").getall():
-            if temp_code.strip() == "":
-                continue
-            elif not temp_code.strip() in temp_codes:
-                temp_codes.append(temp_code.strip())
+        for class_info in ClassContainerIterator(classContainer):
+            # Add subject_name to class_info
+            class_info['subject_name'] = subject_pair[class_info['subject_code']]
+            if class_info not in timetable:
+                timetable.append(class_info)
 
-        temp_names = []
-        for temp_name in class_names.xpath("//td[@class='cssTtableSspNavMasterSpkInfo3']/div/text()").getall():
-            if temp_name.strip() == "":
-                continue
-            elif not temp_name.strip() in temp_names:
-                temp_names.append(temp_name.strip())
+        self.log("{} class(s) information retrieved".format(len(timetable)))
 
-        for i in range (0, len(temp_codes)):
-            subject_code_name.append((temp_codes[i], temp_names[i]))
+    def match_name_and_info(self, response):
 
-        temp_codes =[x.strip() for x in class_info.xpath("//div[@class='cssTtableHeaderPanel']/text()").getall()]
-        temp_types =[x.strip() for x in class_info.xpath("//span[@class='cssTtableClsSlotWhat']/text()").getall()]
-        temp_times =[x.strip() for x in class_info.xpath("//span[@class='cssTtableClsSlotWhen']/text()").getall()]
-        temp_locs =[x.strip() for x in class_info.xpath("//span[@class='cssTtableClsSlotWhere']/text()").getall()]
-        for i in range(0, len(temp_codes)):
-            if (temp_codes[i], temp_types[i], temp_times[i], temp_locs[i]) not in subject_code_info:
-                subject_code_info.append((temp_codes[i], temp_types[i], temp_times[i], temp_locs[i]))
+        subject_pair = {}
 
-        # merge all
-        subject_code_name_info = []
-        for sub_c_n in subject_code_name:
-            for sub_c_i in subject_code_info:
-                #  if same code
-                if sub_c_n[0] == sub_c_i[0]:
-                    subject_code_name_info.append((sub_c_n[0], sub_c_n[1], sub_c_i[1], sub_c_i[2], sub_c_i[3]))
+        # Extract all subject codes in order
+        subject_codes = []
+        for subject_code_selector in response.xpath(
+                "//div[@class='cssTtableRoundBorder cssTtableSspColourBlock']/span/text()"):
+            sub_code = subject_code_selector.get().strip()
+            if len(sub_code) and sub_code not in subject_codes:
+                subject_codes.append(sub_code)
 
-        self.log("{} class info retrieved".format(len(subject_code_name_info)))
+        # Extract all subject names in order
+        subject_names = []
+        for subject_name_selector in response.xpath("//td[@class='cssTtableSspNavMasterSpkInfo3']/div/text()"):
+            subject_name = subject_name_selector.get().strip()
+            if len(subject_name) and subject_name not in subject_names:
+                subject_names.append(subject_name)
 
-#if __name__ == "__main__":
-#
+        # Match subject code and name
+        for i in range(len(subject_names)):
+            subject_pair[subject_codes[i]] = subject_names[i]
+
+        return subject_pair
+
+
+class ClassContainerIterator:
+    """
+    This class is used to iterate all subject info in classContainers
+
+    """
+    def __init__(self, classContainers, start=0):
+        self.num = start
+        self.classContainers = classContainers
+
+    def __iter__(self):
+      return self
+
+    def __next__(self):
+        # Stop iteration if last element in classContainer has been reached
+        if self.num > len(self.classContainers):
+            raise StopIteration
+        else:
+            subject_dict = {
+                "subject_code": self.classContainers.xpath("//div[@class='cssTtableHeaderPanel']/text()").getall()[self.num].strip(),
+                "class_type": self.classContainers.xpath("//span[@class='cssTtableClsSlotWhat']/text()").getall()[self.num].strip(),
+                "class_time": self.classContainers.xpath("//span[@class='cssTtableClsSlotWhen']/text()").getall()[self.num].strip(),
+                "class_location": self.classContainers.xpath("//span[@class='cssTtableClsSlotWhere']/text()").getall()[self.num].strip()
+            }
+            # go to next element
+            self.num += 1
+            return subject_dict
