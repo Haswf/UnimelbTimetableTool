@@ -1,23 +1,51 @@
 import scrapy
-import logging
+import os
+from pathlib2 import Path
+import json
 from scrapy.http import Request
 from scrapy.utils.response import open_in_browser
 
 class TimeTableSpider(scrapy.Spider):
     name = "timetable"
     start_urls = ['https://prod.ss.unimelb.edu.au/student/Login.aspx']
+    def get_login_credential(self):
+        CREDENTIAL_FILE_NAME = 'uom.json'
+
+        # Get path of credential json file
+        __location__ = Path(os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__))))
+        credential_path = Path(os.path.join(__location__.parent.parent,  # equivalent to .../uom.json
+                                            CREDENTIAL_FILE_NAME))
+
+        # if credential exists in project directory
+        if credential_path.exists():
+            self.log('Reading credential from json')
+            with open(credential_path) as f:
+                credential = json.load(f)
+
+        # read and save credential from user input
+        else:
+            credential = dict()
+            credential['username'] = input("What's your UoM username: ")
+            credential['password'] = input("Then, what's your password: ")
+            with open(credential_path, 'w') as f:
+                json.dump(credential, f)
+                self.log("Credential saved to {}".format(credential_path))
+
+        # return username and password
+        return credential['username'], credential['password']
 
     def parse(self, response):
         self.log("Getting tokens for login")
-        view_state = response.xpath("//div/input[@name='__VIEWSTATE']/@value").extract_first()
-        event_validation = response.xpath("//div/input[@name='__EVENTVALIDATION']/@value").extract_first()
-        view_state_generator = response.xpath("//*/div/input[@name='__VIEWSTATEGENERATOR']/@value").extract_first()
-        formdata = {'__EVENTTARGET': 'ctl00$Content$cmdLogin', 
+        view_state = response.xpath("//div/input[@name='__VIEWSTATE']/@value").get()
+        event_validation = response.xpath("//div/input[@name='__EVENTVALIDATION']/@value").get()
+        view_state_generator = response.xpath("//*/div/input[@name='__VIEWSTATEGENERATOR']/@value").get()
+        username, password = self.get_login_credential();
+        formdata = {'__EVENTTARGET': 'ctl00$Content$cmdLogin',
             '__VIEWSTATE': view_state,
             '__VIEWSTATEGENERATOR': view_state_generator,
             '__EVENTVALIDATION': event_validation,
-            'ctl00$Content$txtUserName$txtText':'hanx7',
-            'ctl00$Content$txtPassword$txtText': '15668362123Aa',
+            'ctl00$Content$txtUserName$txtText': username,
+            'ctl00$Content$txtPassword$txtText': password,
             }
         return scrapy.FormRequest.from_response(response, formdata=formdata, callback=self.open_timetable)
         
@@ -72,5 +100,7 @@ class TimeTableSpider(scrapy.Spider):
                 if sub_c_n[0] == sub_c_i[0]:
                     subject_code_name_info.append((sub_c_n[0], sub_c_n[1], sub_c_i[1], sub_c_i[2], sub_c_i[3]))
 
-        print("1212")
+        self.log("{} class info retrieved".format(len(subject_code_name_info)))
 
+#if __name__ == "__main__":
+#
