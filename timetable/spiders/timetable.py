@@ -14,6 +14,7 @@ class TimeTableSpider(scrapy.Spider):
             yield scrapy.Request(url, callback=self.log_in, dont_filter=False)
 
     def log_in(self, response):
+        # TODO: Doc required
         self.log("Getting tokens for login")
         username, password = self.get_login_credential()
         # TODO：get __EVENTTARGET from response instead of hard coding it
@@ -34,6 +35,7 @@ class TimeTableSpider(scrapy.Spider):
 
 
     def get_login_credential(self):
+        # TODO: Doc required
         # credential file name that contains username and password
         CREDENTIAL_FILE_NAME = 'uom.json'
 
@@ -64,6 +66,7 @@ class TimeTableSpider(scrapy.Spider):
        return
         
     def open_timetable(self,response):
+        # TODO: Doc requried
         # get url of timetable
         # TODO: this xpath expression is ugly...It's probably better to rewrite it someday.
         timetable_url = response.xpath("//div[@class='nav-collapse']/ul/li[2]/a/@href").get()
@@ -74,10 +77,11 @@ class TimeTableSpider(scrapy.Spider):
             raise ValueError("Invalid timetable url {}".format(timetable_url))
 
     def parse_timetable(self, response):
+        # TODO: Doc required
         # Extract ClassContainer selector to construct iterator
         classContainer = response.xpath("//div[@class='cssClassContainer']")
         # Match subject code and subject name
-        subject_pair = self.match_name_and_info(response)
+        subject_pair = self.match_code_name(response)
 
         timetable = list()
 
@@ -89,8 +93,8 @@ class TimeTableSpider(scrapy.Spider):
 
         self.log("{} class(s) information retrieved".format(len(timetable)))
 
-    def match_name_and_info(self, response):
-
+    def match_code_name(self, response):
+        # TODO: Documentation required
         subject_pair = {}
 
         # Extract all subject codes in order
@@ -128,6 +132,7 @@ class ClassContainerIterator:
       return self
 
     def __next__(self):
+        # TODO: Doc required
         # Stop iteration if last element in classContainer has been reached
         if self.num > len(self.classContainers):
             raise StopIteration

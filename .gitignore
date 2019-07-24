@@ -2,3 +2,5 @@
 uom.json
 # ignore credential file of Google API
 credential.json
+# ignore .idea directory
+.idea/*
