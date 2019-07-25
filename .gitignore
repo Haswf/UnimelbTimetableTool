@@ -4,3 +4,7 @@
 *.json
 # ignore __pycache__
 __pycache__
+# ignore token
+token.pickle
+# ignore log file
+*.log
