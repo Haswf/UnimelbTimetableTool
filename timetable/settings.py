@@ -105,7 +105,7 @@ LOG_ENABLED = True
 LOG_ENCODING = 'utf-8'
 
 # Minimum level to log.
-LOG_LEVEL = 'INFO'
+#LOG_LEVEL = 'INFO'
 
 # If True, all standard output (and error) of your process will be redirected to the log.
 # For example if you print('hello') it will appear in the Scrapy log.

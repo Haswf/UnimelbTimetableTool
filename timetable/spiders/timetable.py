@@ -79,67 +79,21 @@ class TimeTableSpider(scrapy.Spider):
 
     def parse_timetable(self, response):
         # TODO: Doc required
-        # Extract ClassContainer selector to construct iterator
-        classContainer = response.xpath("//div[@class='cssClassContainer']")
-        # Match subject code and subject name
-        subject_pair = self.match_code_name(response)
+        for subject in response.xpath("//div[@class='cssTtableSspNavContainer']"):
+            subject_code = subject.xpath(".//div[@class='cssTtableRoundBorder cssTtableSspColourBlock']/span/text()").get().strip()
+            subject_name = subject.xpath(".//td[@class='cssTtableSspNavMasterSpkInfo3']/div/text()").get().strip()
+            semester = subject.xpath(".//span[@class='cssTtablePeriod']/text()").get().strip()
+            for each_class in subject.xpath(".//div[@class='cssTtableNavActvTop']"):
+                class_info = Class()
+                class_info['subject_name'] = subject_name
+                class_info['subject_code'] = subject_code
+                class_info['semester'] = semester
+                class_info['class_type'] = each_class.xpath(".//div[@class='cssTtableSspNavActvNm']/text()").get().strip()
+                class_info['class_location'] = each_class.xpath(".//span[@class='cssTtableNavMainWhere']/span[@class='cssTtableNavMainContent']/text()").get().strip()
 
-        timetable = list()
-
-        for class_info in ClassContainerIterator(classContainer):
-            # Add subject_name to class_info
-            class_info['subject_name'] = subject_pair[class_info['subject_code']]
-            yield class_info
-
-    def match_code_name(self, response):
-        # TODO: Documentation required
-        subject_pair = {}
-
-        # Extract all subject codes in order
-        subject_codes = []
-        for subject_code_selector in response.xpath(
-                "//div[@class='cssTtableRoundBorder cssTtableSspColourBlock']/span/text()"):
-            sub_code = subject_code_selector.get().strip()
-            if len(sub_code) and sub_code not in subject_codes:
-                subject_codes.append(sub_code)
-
-        # Extract all subject names in order
-        subject_names = []
-        for subject_name_selector in response.xpath("//td[@class='cssTtableSspNavMasterSpkInfo3']/div/text()"):
-            subject_name = subject_name_selector.get().strip()
-            if len(subject_name) and subject_name not in subject_names:
-                subject_names.append(subject_name)
-
-        # Match subject code and name
-        for i in range(len(subject_names)):
-            subject_pair[subject_codes[i]] = subject_names[i]
-
-        return subject_pair
-
-
-class ClassContainerIterator:
-    """
-    This class is used to iterate all subject info in classContainers
-
-    """
-    def __init__(self, classContainers, start=0):
-        self.num = start
-        self.classContainers = classContainers
-
-    def __iter__(self):
-      return self
-
-    def __next__(self):
-        # TODO: Doc required
-        # Stop iteration if last element in classContainer has been reached
-        if self.num >= len(self.classContainers):
-            raise StopIteration
-        else:
-            class_info = Class()
-            class_info['subject_code'] = self.classContainers.xpath("//div[@class='cssTtableHeaderPanel']/text()").getall()[self.num].strip()
-            class_info['class_type'] = self.classContainers.xpath("//span[@class='cssTtableClsSlotWhat']/text()").getall()[self.num].strip()
-            class_info['class_time'] = self.classContainers.xpath("//span[@class='cssTtableClsSlotWhen']/text()").getall()[self.num].strip(', ')
-            class_info['class_location'] = self.classContainers.xpath("//span[@class='cssTtableClsSlotWhere']/text()").getall()[self.num].strip()
-            # go to next element
-            self.num += 1
-            return class_info
+                # TODO:　Implement paese_time function to separate weekday, start_time and finish_time
+                parse_time(each_class.xpath(".//span[@class='cssTtableNavMainWhen']/span[@class='cssTtableNavMainContent']/text()").get().strip())
+                class_info['class_weekday'] = None
+                class_info['class_start_time'] = None
+                class_info['class_finish_time'] = None
+                yield class_info
