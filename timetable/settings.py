@@ -65,9 +65,11 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'timetable.pipelines.TimetablePipeline': 300,
-#}
+# Enable WriteTimetableToJSON to write class information to a json file
+ITEM_PIPELINES = {
+    'timetable.pipelines.DuplicatesPipeline' : 200,
+    'timetable.pipelines.JsonWriterPipeLine': 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html

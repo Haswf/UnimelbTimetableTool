@@ -8,7 +8,8 @@
 import scrapy
 
 class Class(scrapy.Item):
+    subject_name = scrapy.Field()
     subject_code = scrapy.Field()
     class_type = scrapy.Field()
-    location = scrapy.Field()
-    time = scrapy.Field()
+    class_location = scrapy.Field()
+    class_time = scrapy.Field()

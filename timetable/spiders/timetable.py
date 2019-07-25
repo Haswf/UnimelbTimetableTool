@@ -1,6 +1,7 @@
 import scrapy
 import os
 from pathlib2 import Path
+from timetable.items import Class
 import json
 from scrapy.http import Request
 from scrapy.utils.response import open_in_browser
@@ -88,8 +89,7 @@ class TimeTableSpider(scrapy.Spider):
         for class_info in ClassContainerIterator(classContainer):
             # Add subject_name to class_info
             class_info['subject_name'] = subject_pair[class_info['subject_code']]
-            if class_info not in timetable:
-                timetable.append(class_info)
+            yield class_info
 
         self.log("{} class(s) information retrieved".format(len(timetable)))
 
@@ -137,12 +137,11 @@ class ClassContainerIterator:
         if self.num > len(self.classContainers):
             raise StopIteration
         else:
-            subject_dict = {
-                "subject_code": self.classContainers.xpath("//div[@class='cssTtableHeaderPanel']/text()").getall()[self.num].strip(),
-                "class_type": self.classContainers.xpath("//span[@class='cssTtableClsSlotWhat']/text()").getall()[self.num].strip(),
-                "class_time": self.classContainers.xpath("//span[@class='cssTtableClsSlotWhen']/text()").getall()[self.num].strip(),
-                "class_location": self.classContainers.xpath("//span[@class='cssTtableClsSlotWhere']/text()").getall()[self.num].strip()
-            }
+            class_info = Class()
+            class_info['subject_code'] = self.classContainers.xpath("//div[@class='cssTtableHeaderPanel']/text()").getall()[self.num].strip()
+            class_info['class_type'] = self.classContainers.xpath("//span[@class='cssTtableClsSlotWhat']/text()").getall()[self.num].strip()
+            class_info['class_time'] = self.classContainers.xpath("//span[@class='cssTtableClsSlotWhen']/text()").getall()[self.num].strip(', ')
+            class_info['class_location'] = self.classContainers.xpath("//span[@class='cssTtableClsSlotWhere']/text()").getall()[self.num].strip()
             # go to next element
             self.num += 1
-            return subject_dict
+            return class_info
