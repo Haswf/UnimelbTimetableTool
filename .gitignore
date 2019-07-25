@@ -2,3 +2,5 @@
 .idea/
 # ignore json files
 *.json
+# ignore __pycache__
+__pycache__
