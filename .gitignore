@@ -1,8 +1,4 @@
-# ignore credential file for log in
-uom.json
-# ignore credential file of Google API
-credential.json
 # ignore .idea directory
-idea/
-# ignore class.json
-class.json
+.idea/
+# ignore json files
+*.json
