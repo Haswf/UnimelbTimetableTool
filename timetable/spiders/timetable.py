@@ -5,6 +5,7 @@ from pathlib2 import Path
 from UnimelbTimetableTool.timetable.items import Class
 from scrapy.exceptions import CloseSpider
 import logging
+import datetime
 
 class TimeTableSpider(scrapy.Spider):
     name = "timetable"
@@ -103,4 +104,9 @@ class TimeTableSpider(scrapy.Spider):
         week_day = subtext[0]
         start_time = subtext[1] + " " + subtext[2].split("-")[0]
         end_time = subtext[2].split("-")[1] + " " + subtext[3]
+
+
+        start_time = start_time.split(" ")[0] if (start_time.split(" ")[1] == "am") else str(int(start_time.split(" ")[0].split(":")[0]) + 12) + ":" + start_time.split(" ")[0].split(":")[1]
+        end_time = end_time.split(" ")[0] if (end_time.split(" ")[1] == "am") else str(int(end_time.split(" ")[0].split(":")[0]) + 12) + ":" + end_time.split(" ")[0].split(":")[1]
+
         return {"week_day": week_day, "start_time": start_time, "end_time": end_time}
