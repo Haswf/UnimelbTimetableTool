@@ -1,10 +1,11 @@
 import scrapy
 import os
-from LoginCredential import LoginCredential
+from UnimelbTimetableTool.LoginCredential import LoginCredential
 from pathlib2 import Path
-from timetable.items import Class
+from UnimelbTimetableTool.timetable.items import Class
 from scrapy.exceptions import CloseSpider
 import logging
+import datetime
 
 class TimeTableSpider(scrapy.Spider):
     name = "timetable"
@@ -92,8 +93,20 @@ class TimeTableSpider(scrapy.Spider):
                 class_info['class_location'] = each_class.xpath(".//span[@class='cssTtableNavMainWhere']/span[@class='cssTtableNavMainContent']/text()").get().strip()
 
                 # TODO:　Implement paese_time function to separate weekday, start_time and finish_time
-                parse_time(each_class.xpath(".//span[@class='cssTtableNavMainWhen']/span[@class='cssTtableNavMainContent']/text()").get().strip())
-                class_info['class_weekday'] = None
-                class_info['class_start_time'] = None
-                class_info['class_finish_time'] = None
+                parse_res = self.parse_time(each_class.xpath(".//span[@class='cssTtableNavMainWhen']/span[@class='cssTtableNavMainContent']/text()").get().strip())
+                class_info['class_weekday'] = parse_res["week_day"]
+                class_info['class_start_time'] = parse_res["start_time"]
+                class_info['class_finish_time'] = parse_res["end_time"]
                 yield class_info
+
+    def parse_time(self, raw_text):
+        subtext = raw_text.split(" ")
+        week_day = subtext[0]
+        start_time = subtext[1] + " " + subtext[2].split("-")[0]
+        end_time = subtext[2].split("-")[1] + " " + subtext[3]
+
+
+        start_time = start_time.split(" ")[0] if (start_time.split(" ")[1] == "am") else str(int(start_time.split(" ")[0].split(":")[0]) + 12) + ":" + start_time.split(" ")[0].split(":")[1]
+        end_time = end_time.split(" ")[0] if (end_time.split(" ")[1] == "am") else str(int(end_time.split(" ")[0].split(":")[0]) + 12) + ":" + end_time.split(" ")[0].split(":")[1]
+
+        return {"week_day": week_day, "start_time": start_time, "end_time": end_time}

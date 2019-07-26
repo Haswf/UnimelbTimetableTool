@@ -1,5 +1,5 @@
-from __future__ import print_function
 import datetime
+import json
 import pickle
 import os.path
 from googleapiclient.discovery import build
@@ -35,6 +35,8 @@ def main():
 
     service = build('calendar', 'v3', credentials=creds)
 
+    with open("class.json",'r') as f:
+        class_infos = json.load(f)
 
     start = datetime.datetime.utcnow()
     start_timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')

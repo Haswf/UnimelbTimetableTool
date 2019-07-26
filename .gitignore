@@ -2,8 +2,8 @@
 .idea/
 # ignore json files
 *.json
-# ignore __pycache__
-__pycache__
+# ignore python cache
+*.pyc
 # ignore token
 token.pickle
 # ignore log file
