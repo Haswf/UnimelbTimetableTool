@@ -1,0 +1,10 @@
+# ignore .idea directory
+.idea/
+# ignore json files
+*.json
+# ignore python cache
+*.pyc
+# ignore token
+token.pickle
+# ignore log file
+*.log

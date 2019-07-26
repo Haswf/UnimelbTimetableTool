@@ -65,9 +65,11 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'timetable.pipelines.TimetablePipeline': 300,
-#}
+# Enable WriteTimetableToJSON to write class information to a json file
+ITEM_PIPELINES = {
+    'timetable.pipelines.DuplicatesPipeline' : 200,
+    'timetable.pipelines.JsonWriterPipeLine': 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html
@@ -89,3 +91,22 @@ DOWNLOADER_MIDDLEWARES = {
 #HTTPCACHE_DIR = 'httpcache'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+
+
+# Configure logging
+LOG_FILE = None
+#LOG_FILE = 'timetable.log'
+
+# Whether to enable logging.
+LOG_ENABLED = True
+
+# The encoding to use for logging.
+LOG_ENCODING = 'utf-8'
+
+# Minimum level to log.
+#LOG_LEVEL = 'INFO'
+
+# If True, all standard output (and error) of your process will be redirected to the log.
+# For example if you print('hello') it will appear in the Scrapy log.
+LOG_STDOUT = False

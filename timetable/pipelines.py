@@ -5,7 +5,42 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
+import json
+from scrapy.exceptions import DropItem
 
-class TimetablePipeline(object):
+
+class JsonWriterPipeLine(object):
+    """
+    JsonWriterPipeLine saves class information to a json file.
+    """
+    def __init__(self):
+        # file name where class information will be saved
+        self.file_name = 'class.json'
+
+    def open_spider(self, spider):
+        self.file = open(self.file_name, 'w')
+
+    def close_spider(self, spider):
+        self.file.close()
+
     def process_item(self, item, spider):
+        # Write new line contains subject information to file
+        line = json.dumps(dict(item)) + "\n"
+        self.file.write(line)
         return item
+
+class DuplicatesPipeline(object):
+    """
+    DuplicatesPipeline remove duplicates by checking if the hash of the
+    combination of subject code and class type has been seen.
+    """
+    def __init__(self):
+        self.class_seen = set()
+
+    def process_item(self, item, spider):
+        combination = hash(item['subject_code'] + item['class_type'])
+        if combination in self.class_seen:
+            raise DropItem("Duplicate item found: %s" % item)
+        else:
+            self.class_seen.add(combination)
+            return item
