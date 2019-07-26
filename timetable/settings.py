@@ -69,6 +69,7 @@ DOWNLOADER_MIDDLEWARES = {
 ITEM_PIPELINES = {
     'timetable.pipelines.DuplicatesPipeline' : 200,
     'timetable.pipelines.JsonWriterPipeLine': 300,
+    'timetable.pipelines.PickleWriterPipeLine': 400,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

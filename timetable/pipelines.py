@@ -6,6 +6,7 @@
 # See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
 import json
+import pickle
 from scrapy.exceptions import DropItem
 
 
@@ -44,3 +45,26 @@ class DuplicatesPipeline(object):
         else:
             self.class_seen.add(combination)
             return item
+
+class PickleWriterPipeLine(object):
+    """
+    PickleWriterPipeLine serializes a list of Class object and save it to a pickle file.
+    """
+    def __init__(self):
+        # file name where class information will be saved
+        self.file_name = 'class.pickle'
+        self.class_list = list()
+
+    def open_spider(self, spider):
+        self.file = open(self.file_name, 'w')
+
+    def close_spider(self, spider):
+        # serialize class_list and dump to file
+        pickle.dump(self.class_list, self.file)
+        self.file.close()
+
+    def process_item(self, item, spider):
+        # append each class to class_list
+        self.class_list.append(item)
+        return item
+

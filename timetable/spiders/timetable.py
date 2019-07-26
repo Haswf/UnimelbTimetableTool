@@ -90,9 +90,6 @@ class TimeTableSpider(scrapy.Spider):
                 class_info['semester'] = semester
                 class_info['class_type'] = each_class.xpath(".//div[@class='cssTtableSspNavActvNm']/text()").get().strip()
                 class_info['class_location'] = each_class.xpath(".//span[@class='cssTtableNavMainWhere']/span[@class='cssTtableNavMainContent']/text()").get().strip()
-
-                # TODO:　Implement paese_time function to separate weekday, start_time and finish_time
-                parse_time(each_class.xpath(".//span[@class='cssTtableNavMainWhen']/span[@class='cssTtableNavMainContent']/text()").get().strip())
                 class_info['class_weekday'] = None
                 class_info['class_start_time'] = None
                 class_info['class_finish_time'] = None
