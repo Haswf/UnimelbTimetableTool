@@ -1,18 +1,18 @@
 import datetime
-import json
-import pickle
 import os.path
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
+import pickle
+
 from google.auth.transport.requests import Request
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
 
 # If modifying these scopes, delete the file token.pickle.
+# This scope grants access to view/edit/delete events
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
-#
+
 def main():
-    """Shows basic usage of the Google Calendar API.
-    Prints the start and name of the next 10 events on the user's calendar.
+    """Add class to Google Calendar
     """
     creds = None
     # The file token.pickle stores the user's access and refresh tokens, and is
@@ -35,19 +35,17 @@ def main():
 
     service = build('calendar', 'v3', credentials=creds)
 
-    with open("class.json",'r') as f:
-        class_infos = json.load(f)
-
     start = datetime.datetime.utcnow()
     start_timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
     end = start + datetime.timedelta(hours=2)
     end_timestamp = end.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
-    # add hours in datetime +timedelta(hours=9)
+    recurrence_end = datetime.datetime(year=2019, month=10, day=27).strftime('%Y%m%dT%H%M%SZ')
+
     event = {
-        'summary': 'Test',
-        'location': '800 Howard St., San Francisco, CA 94103',
-        'description': 'A chance to hear more about Google\'s developer products.',
+        'summary': 'Colour Test',
+        'location': 'The University of Melbourne',
+        'description': '',
         'start': {
             'dateTime': start_timestamp,
             'timeZone': 'Australia/Melbourne',
@@ -55,7 +53,11 @@ def main():
         'end': {
             'dateTime': end_timestamp,
             'timeZone': 'Australia/Melbourne',
-        }
+        },
+        "recurrence": [
+            "RRULE:FREQ=WEEKLY;UNTIL={}".format(recurrence_end),
+        ],
+        'colorId': '1',
     }
     # Insert event to calendar
     event = service.events().insert(calendarId='primary', body=event).execute()
