@@ -1,11 +1,12 @@
 import scrapy
 import os
-from UnimelbTimetableTool.LoginCredential import LoginCredential
+from LoginCredential import LoginCredential
 from pathlib2 import Path
-from UnimelbTimetableTool.timetable.items import Class
+from timetable.items import Class
 from scrapy.exceptions import CloseSpider
 import logging
 import datetime
+import time
 
 class TimeTableSpider(scrapy.Spider):
     name = "timetable"
@@ -93,20 +94,30 @@ class TimeTableSpider(scrapy.Spider):
                 class_info['class_location'] = each_class.xpath(".//span[@class='cssTtableNavMainWhere']/span[@class='cssTtableNavMainContent']/text()").get().strip()
 
                 # TODO:　Implement paese_time function to separate weekday, start_time and finish_time
-                parse_res = self.parse_time(each_class.xpath(".//span[@class='cssTtableNavMainWhen']/span[@class='cssTtableNavMainContent']/text()").get().strip())
-                class_info['class_weekday'] = parse_res["week_day"]
-                class_info['class_start_time'] = parse_res["start_time"]
-                class_info['class_finish_time'] = parse_res["end_time"]
+                class_info['class_weekday'], \
+                class_info['class_start_time'], \
+                class_info['class_finish_time']= self.parse_time(each_class.xpath(".//span[@class='cssTtableNavMainWhen']/span[@class='cssTtableNavMainContent']/text()").get().strip())
+
                 yield class_info
 
     def parse_time(self, raw_text):
-        subtext = raw_text.split(" ")
-        week_day = subtext[0]
-        start_time = subtext[1] + " " + subtext[2].split("-")[0]
-        end_time = subtext[2].split("-")[1] + " " + subtext[3]
+        AM_OFFSET = 0 # add 0 hours if time is between 0 AM to 1 PM
+        PM_OFFSET = 12 # add 12 hours if time is between 1 PM to 0 AM
 
+        # start_am and end_am denotes am/pm. I could't come up with a better name.
+        week_day, start_time, start_am, finish_time, end_am = raw_text.replace('-', ' ', 1).split(" ")
 
-        start_time = start_time.split(" ")[0] if (start_time.split(" ")[1] == "am") else str(int(start_time.split(" ")[0].split(":")[0]) + 12) + ":" + start_time.split(" ")[0].split(":")[1]
-        end_time = end_time.split(" ")[0] if (end_time.split(" ")[1] == "am") else str(int(end_time.split(" ")[0].split(":")[0]) + 12) + ":" + end_time.split(" ")[0].split(":")[1]
+        # typecast start_time, finish_time to datetime.time object
+        start_time = datetime.time(*tuple([int(i) for i in start_time.split(':')]))
+        finish_time = datetime.time(*tuple([int(i) for i in finish_time.split(':')]))
 
-        return {"week_day": week_day, "start_time": start_time, "end_time": end_time}
+        # lambda function to get time offset for am/pm
+        offset = lambda x, y: (PM_OFFSET if 'pm' in x and y.hour!=12 else AM_OFFSET)
+
+        # apply am/pm offset to start_time
+        start_time = (datetime.datetime.combine(datetime.date.today(), start_time)
+                      + datetime.timedelta(hours=offset(start_am, start_time))).time()
+        # apply am/pm offset to end_time
+        finish_time = (datetime.datetime.combine(datetime.date.today(), finish_time)
+                      + datetime.timedelta(hours=offset(end_am, finish_time))).time()
+        return week_day, start_time, finish_time

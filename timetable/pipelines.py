@@ -26,6 +26,8 @@ class JsonWriterPipeLine(object):
 
     def process_item(self, item, spider):
         # Write new line contains subject information to file
+        item['class_start_time'] = str(item['class_start_time'])
+        item['class_finish_time'] = str(item['class_finish_time'])
         line = json.dumps(dict(item)) + "\n"
         self.file.write(line)
         return item
@@ -56,7 +58,7 @@ class PickleWriterPipeLine(object):
         self.class_list = list()
 
     def open_spider(self, spider):
-        self.file = open(self.file_name, 'w')
+        self.file = open(self.file_name, 'wb')
 
     def close_spider(self, spider):
         # serialize class_list and dump to file
