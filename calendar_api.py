@@ -8,6 +8,8 @@ import calendar
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from collections import defaultdict
+
 # If modifying these scopes, delete the file token.pickle.
 # This scope grants access to view/edit/delete events
 SCOPES = ['https://www.googleapis.com/auth/calendar']
@@ -39,38 +41,55 @@ def main():
 
     with open('class.json', 'r') as f:
         timetable = json.load(f)
+        groupby = groupby_subject(timetable)
 
-    for each_class in timetable:
-        start_time = datetime.time(*tuple([int(i) for i in each_class['class_start_time'].split(":")]))
-        finish_time = datetime.time(*tuple([int(i) for i in each_class['class_finish_time'].split(":")]))
+    color_id = 1
+    for subject in groupby:
+        for _class in groupby[subject]:
+            start_time = datetime.time(*tuple([int(i) for i in _class['class_start_time'].split(":")]))
+            finish_time = datetime.time(*tuple([int(i) for i in _class['class_finish_time'].split(":")]))
 
-        start_timestamp = generate_timestamp(start_time, get_int_weekday(each_class['class_weekday']))
-        end_timestamp = generate_timestamp(finish_time, get_int_weekday(each_class['class_weekday']))
-        recurrence_end = datetime.datetime(year=2019, month=10, day=27).strftime('%Y%m%dT%H%M%SZ')
+            start_timestamp = generate_timestamp(start_time, get_int_weekday(_class['class_weekday']))
+            end_timestamp = generate_timestamp(finish_time, get_int_weekday(_class['class_weekday']))
 
-        event = {
-            'summary': "{}: {}".format(each_class['subject_code'], each_class['class_type']),
-            'location': each_class['class_location'],
-            'description': '',
-            'start': {
-                'dateTime': start_timestamp,
-                'timeZone': 'Australia/Melbourne',
-            },
-            'end': {
-                'dateTime': end_timestamp,
-                'timeZone': 'Australia/Melbourne',
-            },
-            'recurrence': [
-                "RRULE:FREQ=WEEKLY;UNTIL={}".format(recurrence_end),
-            ],
-            'colorId': '1',
-            'reminders': {
-                "useDefault": 'false'
+            recurrence_end = datetime.datetime(year=2019, month=10, day=27).strftime('%Y%m%dT%H%M%SZ')
+
+            event = {
+                'summary': "{}: {}".format(_class['subject_code'], _class['class_type']),
+                'location': _class['class_location'],
+                'description':  "This event was added by UnimelbTimetableTool. "
+                                "Support us by starring this project at "
+                                "https://github.com/Haswf/UnimelbTimetableTool",
+
+                'start': {
+                    'dateTime': start_timestamp,
+                    'timeZone': 'Australia/Melbourne',
+                },
+                'end': {
+                    'dateTime': end_timestamp,
+                    'timeZone': 'Australia/Melbourne',
+                },
+                'recurrence': [
+                    "RRULE:FREQ=WEEKLY;UNTIL={}".format(recurrence_end),
+                ],
+                'colorId': color_id,
+                'reminders': {
+                    "useDefault": 'false'
+                }
             }
-        }
-        # Insert event to calendar
-        event = service.events().insert(calendarId='primary', body=event).execute()
-        print('Event created: %s' % (event.get('htmlLink')))
+            # Insert event to calendar
+            #print(event)
+            event = service.events().insert(calendarId='primary', body=event).execute()
+            print('Event created: %s' % (event.get('htmlLink')))
+        color_id += 1
+
+def next_weekday(d, weekday):
+    # credit: phihag
+    # reference: https://stackoverflow.com/questions/6558535/find-the-date-for-the-first-monday-after-a-given-a-date
+    days_ahead = weekday - d.weekday()
+    if days_ahead <= 0:  # Target day already happened this week
+        days_ahead += 7
+    return d + datetime.timedelta(days_ahead)
 
 def next_weekday(d, weekday):
     # credit: phihag
@@ -112,6 +131,11 @@ def convert_to_UTC(localdatetime, timezone):
     utc_time = localdatetime.astimezone(pytz.utc)
     return utc_time
 
+def groupby_subject(timetable):
+    groupby = defaultdict(list)
+    for _class in timetable:
+        groupby[_class["subject_code"]].append(_class)
+    return groupby
 
 
 if __name__ == '__main__':

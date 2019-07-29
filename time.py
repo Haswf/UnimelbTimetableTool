@@ -41,8 +41,3 @@ def convert_to_UTC(localdatetime, timezone):
     # Transform the time to UTC
     utc_time = localdatetime.astimezone(pytz.utc)
     return utc_time
-
-
-
-if __name__ == '__main__':
-    generate_timestamp()
