@@ -7,28 +7,28 @@
 
 import json
 import pickle
+from scrapy.exporters import PickleItemExporter, JsonItemExporter, JsonLinesItemExporter
 from scrapy.exceptions import DropItem
+from os.path import dirname, abspath, join
 
 
-class JsonWriterPipeLine(object):
-    """
-    JsonWriterPipeLine saves class information to a json file.
-    """
+class JsonWriterPipeline(object):
     def __init__(self):
-        # file name where class information will be saved
-        self.file_name = 'class.json'
-
-    def open_spider(self, spider):
-        self.file = open(self.file_name, 'w')
+        self.file_name = "class.json"
+        self.file_path = join(dirname(dirname(abspath(__file__))), self.file_name)
+        self.file = open(self.file_path, 'wb')
+        self.exporter = JsonItemExporter(self.file, encoding='utf-8', ensure_ascii=False)
+       # self.exporter = JsonLinesItemExporter(self.file, encoding='utf-8', ensure_ascii=False)
+        self.exporter.start_exporting()
 
     def close_spider(self, spider):
+        self.exporter.finish_exporting()
         self.file.close()
 
     def process_item(self, item, spider):
-        # Write new line contains subject information to file
-        line = json.dumps(dict(item)) + "\n"
-        self.file.write(line)
+        self.exporter.export_item(item)
         return item
+
 
 class DuplicatesPipeline(object):
     """
@@ -46,25 +46,18 @@ class DuplicatesPipeline(object):
             self.class_seen.add(combination)
             return item
 
-class PickleWriterPipeLine(object):
-    """
-    PickleWriterPipeLine serializes a list of Class object and save it to a pickle file.
-    """
+class PickleWriterPipeline(object):
     def __init__(self):
-        # file name where class information will be saved
-        self.file_name = 'class.pickle'
-        self.class_list = list()
-
-    def open_spider(self, spider):
-        self.file = open(self.file_name, 'w')
+        self.file_name = "class.pickle"
+        self.file_path = join(dirname(dirname(abspath(__file__))), self.file_name)
+        self.file = open(self.file_path, 'wb')
+        self.exporter = PickleItemExporter(self.file)
+        self.exporter.start_exporting()
 
     def close_spider(self, spider):
-        # serialize class_list and dump to file
-        pickle.dump(self.class_list, self.file)
+        self.exporter.finish_exporting()
         self.file.close()
 
     def process_item(self, item, spider):
-        # append each class to class_list
-        self.class_list.append(item)
+        self.exporter.export_item(item)
         return item
-

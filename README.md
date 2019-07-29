@@ -13,8 +13,10 @@ A spider to automatically add your Melbourne university timetable to Google Cale
 - [x] Log into My Unimelb timetable page
 - [x] Save login credential locally
 - [x] Extract class information from the page
-- [ ] Save class information in `JSON` format and `Items`object in scrapy
-- [ ] Add class to google calendar using calendar API
-  - [ ] Set repetition correctly ( i.e. Week 1 to week 12)
+- [x] Save class information in `JSON` format
+- [x] Add class to google calendar using calendar API
+  - [x] Set recurrence event
   - [ ] Label subjects with colors
-- [ ] Sync timetable with google Calendar
+  - [ ] Customize reminders 
+- [ ] Update event details if your timetable has changed
+- [ ] Delete events added by `UnimelbTimetableTool`
