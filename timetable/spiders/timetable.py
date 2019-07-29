@@ -97,9 +97,7 @@ class TimeTableSpider(scrapy.Spider):
                 class_info['class_weekday'], \
                 class_info['class_start_time'], \
                 class_info['class_finish_time']= self.parse_time(each_class.xpath(".//span[@class='cssTtableNavMainWhen']/span[@class='cssTtableNavMainContent']/text()").get().strip())
-
                 yield class_info
-
     def parse_time(self, raw_text):
         AM_OFFSET = 0 # add 0 hours if time is between 0 AM to 1 PM
         PM_OFFSET = 12 # add 12 hours if time is between 1 PM to 0 AM

@@ -68,8 +68,8 @@ DOWNLOADER_MIDDLEWARES = {
 # Enable WriteTimetableToJSON to write class information to a json file
 ITEM_PIPELINES = {
     'timetable.pipelines.DuplicatesPipeline' : 200,
-    'timetable.pipelines.JsonWriterPipeLine': 300,
-    'timetable.pipelines.PickleWriterPipeLine': 400,
+    #'timetable.pipelines.PickleWriterPipeline': 250,
+    'timetable.pipelines.JsonWriterPipeline': 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
