@@ -26,6 +26,7 @@ pycparser==2.19
 PyDispatcher==2.0.5
 PyHamcrest==1.9.0
 pyOpenSSL==19.0.0
+pytz==2019.2
 queuelib==1.5.0
 requests==2.22.0
 requests-oauthlib==1.2.0
