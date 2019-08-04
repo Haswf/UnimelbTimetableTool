@@ -10,6 +10,14 @@ def next_weekday(d, weekday):
         days_ahead += 7
     return d + datetime.timedelta(days_ahead)
 
+def next_weekday(d, weekday):
+    # credit: phihag
+    # reference: https://stackoverflow.com/questions/6558535/find-the-date-for-the-first-monday-after-a-given-a-date
+    days_ahead = weekday - d.weekday()
+    if days_ahead <= 0:  # Target day already happened this week
+        days_ahead += 7
+    return d + datetime.timedelta(days_ahead)
+
 
 def get_int_weekday(weekday):
     """

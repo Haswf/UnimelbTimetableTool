@@ -34,11 +34,11 @@ def main():
         with open('token.pickle', 'wb') as token:
             pickle.dump(creds, token)
 
-    service = build('calendar', 'v3', credentials=creds)
+    service = build('gcalendar', 'v3', credentials=creds)
     colors = service.colors().get().execute()
 
     # Print available calendarListEntry colors.
-    for id, color in colors['calendar'].items():
+    for id, color in colors['gcalendar'].items():
         # print('colorId: %s' % id)
         # print('Background: %s' % color['background'])
         # print('Foreground: %s' % color['foreground'])

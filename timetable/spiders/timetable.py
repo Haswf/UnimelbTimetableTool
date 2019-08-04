@@ -1,23 +1,19 @@
 import scrapy
 import os
-from LoginCredential import LoginCredential
 from pathlib2 import Path
 from timetable.items import Class
 from scrapy.exceptions import CloseSpider
 import logging
 import datetime
-import time
+from settings import UOM_USERNAME as username
+from settings import UOM_PASSWORD as password
 
 class TimeTableSpider(scrapy.Spider):
     name = "timetable"
     start_urls = ['https://prod.ss.unimelb.edu.au/student/Login.aspx']
-    # credential file name that contains username and password
-    credential_file = 'uom.json'
-    credential_obj = None
 
     def __init__(self):
         super().__init__()
-        self.credential_obj = LoginCredential(filepath=self.get_credential_path())
 
     def start_requests(self):
         for url in self.start_urls:
@@ -26,8 +22,6 @@ class TimeTableSpider(scrapy.Spider):
     def log_in(self, response):
         # TODO: Doc required
         self.log(level=logging.INFO, message="Getting tokens for login")
-        # call credential_obj to get username and password
-        self.credential_obj.get_credential()
 
         # Construct form data
         # TODO：get __EVENTTARGET from response instead of hard coding it
@@ -35,8 +29,8 @@ class TimeTableSpider(scrapy.Spider):
                     '__VIEWSTATE': response.xpath("//div/input[@name='__VIEWSTATE']/@value").get(),
                     '__VIEWSTATEGENERATOR': response.xpath("//*/div/input[@name='__VIEWSTATEGENERATOR']/@value").get(),
                     '__EVENTVALIDATION': response.xpath("//div/input[@name='__EVENTVALIDATION']/@value").get(),
-                    'ctl00$Content$txtUserName$txtText': self.credential_obj.username,
-                    'ctl00$Content$txtPassword$txtText': self.credential_obj.password
+                    'ctl00$Content$txtUserName$txtText': username,
+                    'ctl00$Content$txtPassword$txtText': password
                     }
 
         # validate tokens
