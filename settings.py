@@ -11,8 +11,8 @@ SEMESTER_END_MONTH = 10
 SEMESTER_END_DAY = 27
 """int: On which day the semester ends"""
 
-UOM_USERNAME = "SHUYANGF"
+UOM_USERNAME = ""
 
-UOM_PASSWORD = "UnimelbHaswf0204"
+UOM_PASSWORD = ""
 
 READ_ONLY = False
