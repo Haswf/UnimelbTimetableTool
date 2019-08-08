@@ -3,6 +3,7 @@ import datetime
 import pickle
 import os.path
 import json
+from os.path import dirname, abspath, join
 
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -62,6 +63,7 @@ def find_calendar(service, summary):
         for calendar_list_entry in calendar_list['items']:
             if (calendar_list_entry['summary']) == summary:
                 calendarID = calendar_list_entry['id']
+                break
         page_token = calendar_list.get('nextPageToken')
         if not page_token:
             break
@@ -120,7 +122,9 @@ def create_timetable():
     else:
         remove_calendar(service, calendarId=calendarId)
     # load timetable from class.json
-    with open('class.json', 'r') as f:
+    file_path = join(dirname(dirname(abspath(__file__))), 'class.json')
+
+    with open(file_path, 'r') as f:
         timetable = json.load(f)
         groupby = groupby_subject(timetable)
 
